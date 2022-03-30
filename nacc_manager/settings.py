@@ -80,9 +80,9 @@ WSGI_APPLICATION = 'nacc_manager.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'HOST': '192.168.2.235',
+        'HOST': '127.0.0.1',
         'PORT': '5432',
-        'NAME': 'manager_hucl',
+        'NAME': 'sams_manager',
         'USER': 'postgres',
         'PASSWORD': 'sams111',
     }

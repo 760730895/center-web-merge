@@ -132,6 +132,11 @@ class RegisterSupInfoViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = serializers.RegisterSupInfoSerializer
     ordering = ('id',)
 
+    def list(self, request, *args, **kwargs):
+        queryset = self.queryset.first()
+        serializer = self.get_serializer(queryset)
+        return Response(serializer.data)
+
     def perform_create(self, serializer):
         serializer.save()
 

@@ -22,6 +22,11 @@ class ConfigAddressViewSet(viewsets.ModelViewSet):
     serializer_class = serializers.ConfigAddressSerializer
     ordering = ('id',)
 
+    def list(self, request, *args, **kwargs):
+        queryset = self.queryset.first()
+        serializer = self.get_serializer(queryset)
+        return Response(serializer.data)
+
 
 class OperatingViewSet(viewsets.GenericViewSet):
     @classmethod

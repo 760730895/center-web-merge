@@ -60,6 +60,69 @@ class RegisterSubInfoViewSet(viewsets.ReadOnlyModelViewSet):
         except (TypeError, KeyError):
             return {}
 
+    def get_children(self, obj, num=1):
+        relist = []
+        layer = num + 1
+        if num == 0:
+            parentitems = self.queryset.filter(sid=obj, pid=obj)
+            config_address = models.ConfigAddress.objects.all().first()
+            for i in parentitems:
+                data_dirt = {"sid": i.sid,
+                             "pid": obj,
+                             "ip": config_address.local_ip,
+                             "location": config_address.location,
+                             "loc_des": config_address.loc_des,
+                             "type": 2,
+                             "username": 'admin',
+                             "password": 'yihnac@123',
+                             "layer": num + 1,
+                             "children": self.get_children(i.sid, layer) if self.get_children(i.sid, layer) else None}
+                relist.append(data_dirt)
+        elif num == 1:
+            parentitems = self.queryset.filter(pid=obj)
+            if parentitems.exists():
+                for i in parentitems:
+                    data_dirt = {"sid": i.sid,
+                                 "pid": obj,
+                                 "ip": i.ip,
+                                 "type": i.type,
+                                 "location": i.location,
+                                 "loc_des": i.des,
+                                 "username": i.username,
+                                 "password": i.password,
+                                 "layer": num + 1,
+                                 "children": self.get_children(i.sid, layer) if i.sid != i.pid else None}
+                    relist.append(data_dirt)
+            else:
+                relist = None
+        else:
+            if self.queryset.exclude(sid=obj).filter(pid=obj).exists():
+                parentitems = self.queryset.exclude(sid=obj).filter(pid=obj)
+                for i in parentitems:
+                    data_dirt = {"sid": i.sid,
+                                 "pid": obj,
+                                 "ip": i.ip,
+                                 "type": i.type,
+                                 "location": i.location,
+                                 "loc_des": i.des,
+                                 "username": i.username,
+                                 "password": i.password,
+                                 "layer": num + 1,
+                                 "children": self.get_children(i.sid, layer) if self.get_children(i.sid,
+                                                                                                  layer) else None}
+                    relist.append(data_dirt)
+            else:
+                relist = None
+
+        return relist
+
+    @action(methods=['get'], detail=False, url_name='tree_node')
+    def tree_node(self, request, pk=None):
+        # [{"id":0,"pid":-1,"name":"全部资产","num":37,"layer":1,"children":{}]
+        node_list = self.get_children(owner_id, 0)
+
+        return Response(node_list, status=status.HTTP_200_OK)
+
     @action(methods=['get'], detail=False, permission_classes=[], url_name='register_query_sub')
     def register_query_sub(self, request, pk=None):
         """

@@ -168,20 +168,20 @@ class RegisterSubInfoViewSet(viewsets.ReadOnlyModelViewSet):
         """
         pk = request.query_params['sid']
         for item in self.queryset.filter(sid=pk):
-            down_url = add_url(item.ip, api_path=f'/system/user/delete_user/?uid={owner_id}', port=8090)
+            down_url = add_url(item.ip, api_path=f'/CyApi/system/user/delete_user/?uid={owner_id}', port=8080)
             code1, data1, msg1 = url_delete_api(down_url)
             if code1 >= 400:
                 return Response(f'delete_user1 api err:{msg1}', status=status.HTTP_408_REQUEST_TIMEOUT)
         for it in self.queryset.filter(pid=pk):
-            down_url = add_url(it.ip, api_path=f'/system/user/delete_user/?uid={owner_id}', port=8090)
+            down_url = add_url(it.ip, api_path=f'/CyApi/system/user/delete_user/?uid={owner_id}', port=8080)
             code2, data2, msg2 = url_delete_api(down_url)
             if code2 >= 400:
                 return Response(f'delete_user2 api err:{msg2}', status=status.HTTP_408_REQUEST_TIMEOUT)
 
         local_up_item = models.RegisterSupInfo.objects.all().first()
         if local_up_item:
-            up_url = add_url(local_up_item.ip, api_path=f'/register/sub/register_delete/?sid={local_up_item.pid}',
-                             port=8008)
+            up_url = add_url(local_up_item.ip, api_path=f'/MyApi/register/sub/register_delete/?sid={local_up_item.pid}',
+                             port=8088)
             code3, data3, msg3 = url_delete_api(up_url)
             if code3 != 200:
                 return Response(f'register_delete3 api err:{msg3}', status=status.HTTP_408_REQUEST_TIMEOUT)
@@ -238,7 +238,7 @@ class RegisterSupInfoViewSet(viewsets.ReadOnlyModelViewSet):
             data['user_id'] = 0
             try:
                 # 调用creat_user api
-                url = add_url('127.0.0.1', api_path='/system/user/create_user/', port=8090)
+                url = add_url('127.0.0.1', api_path='/CyApi/system/user/create_user/', port=8080)
                 create_up_body = {
                     "username": data['username'],
                     "password": data['password'],
@@ -252,7 +252,7 @@ class RegisterSupInfoViewSet(viewsets.ReadOnlyModelViewSet):
                 if code1 >= 400:
                     return Response(f'请求creat_user api err:{msg1}', status=status.HTTP_412_PRECONDITION_FAILED)
                 # 调用上级的register_recv\
-                up_url = add_url(data['ip'], api_path='/register/sub/register_recv/', port=8008)
+                up_url = add_url(data['ip'], api_path='/MyApi/register/sub/register_recv/', port=8088)
                 register_recv_body = {
                     "ip": local_items.local_ip,
                     "location": data['location'],
@@ -296,7 +296,7 @@ class RegisterSupInfoViewSet(viewsets.ReadOnlyModelViewSet):
         if self.queryset.filter(pid=pid).exists():
             up_items = self.queryset.get(pid=pid)
             up_ip = up_items.ip
-            up_url = add_url(up_ip, api_path=f'/register/sub/register_delete/?sid={owner_id}', port=8008)
+            up_url = add_url(up_ip, api_path=f'/MyApi/register/sub/register_delete/?sid={owner_id}', port=8088)
             code2, data2, msg2 = url_delete_api(up_url)
             if code2 >= 400:
                 return Response(f'register_delete api err:{msg2}', status=status.HTTP_408_REQUEST_TIMEOUT)

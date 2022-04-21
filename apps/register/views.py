@@ -6,13 +6,14 @@ import os
 import threading
 import time
 
-from rest_framework import viewsets, status
+from rest_framework import viewsets, status, mixins
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.settings import api_settings
+from rest_framework.viewsets import GenericViewSet
 
 from apps.register import models, serializers
-from apps.until.api_method import url_post_api, url_delete_api
+from apps.until.api_method import url_post_api, url_delete_api, url_get_api
 from apps.until.rd_username import register_create_user
 from nacc_manager.mg_config import add_url, owner_id
 
@@ -46,7 +47,10 @@ class OperatingViewSet(viewsets.GenericViewSet):
             return Response('输入参数不对', status=status.HTTP_400_BAD_REQUEST)
 
 
-class RegisterSubInfoViewSet(viewsets.ReadOnlyModelViewSet):
+class RegisterSubInfoViewSet(mixins.RetrieveModelMixin,
+                             mixins.ListModelMixin,
+                             mixins.DestroyModelMixin,
+                             GenericViewSet):
     queryset = models.RegisterSubInfo.objects.all()
     serializer_class = serializers.RegisterSubInfoSerializer
     ordering = ('id',)
@@ -122,6 +126,35 @@ class RegisterSubInfoViewSet(viewsets.ReadOnlyModelViewSet):
         node_list = self.get_children(owner_id, 0)
 
         return Response(node_list, status=status.HTTP_200_OK)
+
+    @action(methods=['get'], detail=False, url_name='check_node')
+    def check_node(self, request, pk=None):
+        pk = request.query_params['id']
+        if self.queryset.filter(id=pk).exists():
+            node_ip = self.queryset.get(id=pk).ip
+            owner_url = add_url(node_ip, api_path='/CyApi/asset/userinfo/dev_pulldown/', port=8080)
+            try:
+                code, data, msg = url_get_api(owner_url)
+                if code <= 400:
+                    return Response('节点存在', status=status.HTTP_200_OK)
+                else:
+                    return Response('节点未知，是否删除', status=status.HTTP_300_MULTIPLE_CHOICES)
+            except Exception as exp:
+                return Response(f'节点未知，是否删除 {exp}', status=status.HTTP_300_MULTIPLE_CHOICES)
+
+        else:
+            return Response(f'没有找到 {pk}的主键', status=status.HTTP_400_BAD_REQUEST)
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        owner_url = add_url(instance.ip, api_path=f'/CyApi/system/sup/register_un/?pid={instance.pid}', port=8080)
+        try:
+            code, data, msg = url_delete_api(owner_url)
+        except Exception as exp:
+            pass
+        finally:
+            self.perform_destroy(instance)
+            return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(methods=['get'], detail=False, permission_classes=[], url_name='register_query_sub')
     def register_query_sub(self, request, pk=None):

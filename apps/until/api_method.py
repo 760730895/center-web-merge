@@ -9,6 +9,8 @@
 import json
 import requests
 
+timeout = (10, 5)
+
 
 def url_post_api(url, body):
     """
@@ -20,7 +22,7 @@ def url_post_api(url, body):
     }
     api_json = json.dumps(body)
     print('************url_post_api*********\n', url, '\n', api_json)
-    api_data = requests.post(url=url, headers=headers, data=api_json)
+    api_data = requests.post(url=url, headers=headers, data=api_json, timeout=timeout)
     api_info = json.loads(api_data.text)
     api_code = api_info["code"]
     api_result = api_info['data']
@@ -39,7 +41,7 @@ def url_delete_api(url):
         'Content-Type': 'application/json'
     }
     print('*********url_delete_api************\n', url)
-    api_data = requests.delete(url, headers=headers)
+    api_data = requests.delete(url, headers=headers, timeout=timeout)
     api_info = json.loads(api_data.text)
     api_code = api_info["code"]
     api_result = api_info['data']
@@ -58,7 +60,7 @@ def url_get_api(url):
         'Content-Type': 'application/json'
     }
     print('**************url_get_api*************\n', url)
-    api_data = requests.get(url, headers=headers)
+    api_data = requests.get(url, headers=headers, timeout=timeout)
     api_info = json.loads(api_data.text)
     api_code = api_info["code"]
     api_result = api_info['data']
